@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../NN_Bovespa/.idea/NN_Bovespa.iml" filepath="$PROJECT_DIR$/../NN_Bovespa/.idea/NN_Bovespa.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/nn_bovespa.iml" filepath="$PROJECT_DIR$/.idea/nn_bovespa.iml" />
     </modules>
   </component>
 </project>
