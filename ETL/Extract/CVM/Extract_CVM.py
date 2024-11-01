@@ -21,9 +21,9 @@ for year in range(first_year, last_year+1):
 # Download files
 for i, file in enumerate(zip_files):
     print('Dowloading File ('+str(i+1)+'/'+str(len(zip_files))+'):', file)
-    wget.download(url_base+file)
+    wget.download(url_base+file, out='Extracted')
 
 # Extract files
 for i, file in enumerate(zip_files):
     print('Extractiong File ('+str(i+1)+'/'+str(len(zip_files))+'):', file)
-    ZipFile(file, 'r').extractall('Extracted')
+    ZipFile('Extracted/'+file, 'r').extractall('Extracted')
