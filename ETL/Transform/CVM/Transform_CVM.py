@@ -102,7 +102,7 @@ for key, df in data_frames.items():
 # stocks of interest. The script will run through the sheets generated so far to fill the empty spaces with the
 # fundamental data required.
 
-stockList = pd.read_csv(f'../Ticker_CVMCode.csv', sep=';', encoding='ISO-8859-1')
+stockList = pd.read_csv(f'../../Ticker_CVMCode.csv', sep=';', encoding='ISO-8859-1')
 
 # Drop rows with companies without information
 stockList = stockList[stockList['DENOM_CIA'] != '-']
