@@ -87,16 +87,6 @@ for key in data_frames.keys():
         data_frames[key].drop(
             ['DT_INI_EXERC'], axis=1, inplace=True)
 
-# Loop through each DataFrame in the dictionary and save it to a CSV file
-for key, df in data_frames.items():
-    # Define the filename using the dictionary key
-    filename = f"{key}.csv"
-
-    # Save the DataFrame as a CSV file (use for tests only)
-    # df.to_csv(filename, sep=';', decimal='.', encoding='ISO-8859-1', index=False)
-
-    print(f"Saved {filename}")
-
 ########################################################################################################################
 # The resulting dataframes will be merged with the Ticker_CVMCode data in order to create a new Dataframe with only the
 # stocks of interest. The script will run through the sheets generated so far to fill the empty spaces with the
@@ -113,10 +103,9 @@ columns = {
     'DT_REFER': None,   # Reference Date
     'E': None,          # Earnings
     'EPS': None,        # Earnings per Share
-    'TA': None,         # Total Assets
     'CA': None,         # Current Assets
     'CL': None,         # Current Liabilities
-    'GROSS DEBT': None,
+    'GROSS_DEBT': None,
     'EQUITY': None,
     'D': None           # Dividends
 }
@@ -222,25 +211,6 @@ for i, ticker in enumerate(stockList['Ticker']):
                             (fundamentalData['DT_REFER'] == date), 'EPS'] = EPS
 
     ####################################################################################################################
-    # Extract Total Assets (TA)
-    filtered_TA = pd.DataFrame()
-    if trigger == 0:
-        filtered_TA = data_frames['BPA_con'][(data_frames['BPA_con']['CD_CVM'] == cvm_code) &
-                                             (data_frames['BPA_con']['CD_CONTA'] == '1')].copy()
-    elif trigger == 1:
-        filtered_TA = data_frames['BPA_ind'][(data_frames['BPA_ind']['CD_CVM'] == cvm_code) &
-                                             (data_frames['BPA_ind']['CD_CONTA'] == '1')].copy()
-    else:
-        continue
-    filtered_TA.loc[:, 'TICKER'] = ticker
-
-    # Merge the current fundamentalData to the filtered_TA dataframe where TICKER and DT_REFER match.
-    # Assign the VL_CONTA value in filtered_TA to TA in fundamentalData
-    merged_df = fundamentalData[fundamentalData['TICKER'] == ticker]. \
-        merge(filtered_TA[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
-    fundamentalData.loc[fundamentalData['TICKER'] == ticker, 'TA'] = merged_df['VL_CONTA'].values
-
-    ####################################################################################################################
     # Extract Current Assets (CA)
     filtered_CA = pd.DataFrame()
     if trigger == 0:
@@ -253,7 +223,7 @@ for i, ticker in enumerate(stockList['Ticker']):
         continue
     filtered_CA.loc[:, 'TICKER'] = ticker
 
-    # Merge the current fundamentalData to the filtered_CA dataframe where TICKER and DT_REFER match.
+    # MergeAndTransform the current fundamentalData to the filtered_CA dataframe where TICKER and DT_REFER match.
     # Assign the VL_CONTA value in filtered_CA to CA in fundamentalData
     merged_df = fundamentalData[fundamentalData['TICKER'] == ticker].\
         merge(filtered_CA[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
@@ -272,7 +242,7 @@ for i, ticker in enumerate(stockList['Ticker']):
         continue
     filtered_CL.loc[:, 'TICKER'] = ticker
 
-    # Merge the current fundamentalData to the filtered_CL dataframe where TICKER and DT_REFER match.
+    # MergeAndTransform the current fundamentalData to the filtered_CL dataframe where TICKER and DT_REFER match.
     # Assign the VL_CONTA value in filtered_CL to CL in fundamentalData
     merged_df = fundamentalData[fundamentalData['TICKER'] == ticker].\
         merge(filtered_CL[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
@@ -298,14 +268,14 @@ for i, ticker in enumerate(stockList['Ticker']):
         # Gross debt is the sum of the values of current debt and non-current debt
         aggregated_GD = filtered_GD.groupby(['TICKER', 'DT_REFER'], as_index=False)['VL_CONTA'].sum()
 
-        # Merge the current fundamentalData to the aggregated_GD dataframe where TICKER and DT_REFER match.
+        # MergeAndTransform the current fundamentalData to the aggregated_GD dataframe where TICKER and DT_REFER match.
         # Assign the VL_CONTA value in aggregated_GD to GROSS DEBT in fundamentalData
         merged_df = fundamentalData[fundamentalData['TICKER'] == ticker].\
             merge(aggregated_GD[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
-        fundamentalData.loc[fundamentalData['TICKER'] == ticker, 'GROSS DEBT'] = merged_df['VL_CONTA'].values
+        fundamentalData.loc[fundamentalData['TICKER'] == ticker, 'GROSS_DEBT'] = merged_df['VL_CONTA'].values
 
     ####################################################################################################################
-    # Extract Equity
+    # Extract Equity (patrimônio líquido)
     filtered_EQ = pd.DataFrame()
     if trigger == 0:
         filtered_EQ = data_frames['BPP_con'][(data_frames['BPP_con']['CD_CVM'] == cvm_code) &
@@ -321,7 +291,7 @@ for i, ticker in enumerate(stockList['Ticker']):
         continue
     filtered_EQ.loc[:, 'TICKER'] = ticker
 
-    # Merge the current fundamentalData to the filtered_EQ dataframe where TICKER and DT_REFER match.
+    # MergeAndTransform the current fundamentalData to the filtered_EQ dataframe where TICKER and DT_REFER match.
     # Assign the VL_CONTA value in filtered_EQ to EQUITY in fundamentalData
     merged_df = fundamentalData[fundamentalData['TICKER'] == ticker].\
         merge(filtered_EQ[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
@@ -358,14 +328,19 @@ for i, ticker in enumerate(stockList['Ticker']):
         continue
     if not filtered_D.empty:
         filtered_D.loc[:, 'TICKER'] = ticker
-        # Gross debt is the sum of the values of current debt and non-current debt
+        # Aggregate values extracted by sum
         aggregated_D = filtered_D.groupby(['TICKER', 'DT_REFER'], as_index=False)['VL_CONTA'].sum()
 
-        # Merge the current fundamentalData to the aggregated_D dataframe where TICKER and DT_REFER match.
+        # MergeAndTransform the current fundamentalData to the aggregated_D dataframe where TICKER and DT_REFER match.
         # Assign the VL_CONTA value in aggregated_D to D in fundamentalData
         merged_df = fundamentalData[fundamentalData['TICKER'] == ticker].\
             merge(aggregated_D[['TICKER', 'DT_REFER', 'VL_CONTA']], on=['TICKER', 'DT_REFER'], how='left')
         fundamentalData.loc[fundamentalData['TICKER'] == ticker, 'D'] = merged_df['VL_CONTA'].values
+
+# fill NaN with zeros
+fundamentalData.fillna({'D': 0.0}, inplace=True)
+fundamentalData.fillna({'CL': 0.0}, inplace=True)
+fundamentalData.fillna({'GROSS_DEBT': 0.0}, inplace=True)
 
 fundamentalData.to_csv('Transformed/fundamentalData_CVM.csv', sep=';', decimal='.', encoding='ISO-8859-1', index=False)
 print('fundamentalData_CVM successfully generated')

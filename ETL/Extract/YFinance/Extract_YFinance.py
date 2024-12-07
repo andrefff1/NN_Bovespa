@@ -1,3 +1,5 @@
+# MergeAndTransform Fundamental and Technical Data
+
 import yfinance as yf
 import pandas as pd
 
@@ -31,9 +33,22 @@ for ticker in tickers:
     except Exception as e:
         print(f"Failed to fetch data for {ticker}: {e}")
 
-# Combine all data into a single DataFrame
+# Combine all data into a single DataFrame and rename columns
 technicalData_yf = pd.concat(results, ignore_index=True)
-technicalData_yf = technicalData_yf[['Ticker', 'Date', 'Close', 'Adj Close', 'Market Cap']]
+
+# Rename columns
+technicalData_yf.rename(
+    columns={
+        'Ticker': 'TICKER',
+        'Date': 'DATE',
+        'Close': 'CLOSE',
+        'Adj Close': 'ADJ_CLOSE',
+        'Market Cap': 'MARKET_CAP'
+    },
+    inplace=True
+)
+
+technicalData_yf = technicalData_yf[['TICKER', 'DATE', 'CLOSE', 'ADJ_CLOSE', 'MARKET_CAP']]
 
 # Save to a CSV file
-technicalData_yf.to_csv("Extracted/technicalData_yf.csv", index=False)
+technicalData_yf.to_csv("Extracted/technicalData_yf.csv", sep=';', decimal='.', encoding='ISO-8859-1', index=False)
