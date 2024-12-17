@@ -30,7 +30,7 @@ ncol = data.shape[1]
 #y_train = data_train[:, -1]
 #X_train = data_train[:, 2:ncol-1]
 y_train = data_train[:, -1]
-X_train = data_train[:, 2:3]
+X_train = data_train[:, 2:4]
 #X_train = X_train.reshape(-1, 1)
 
 # Scale the data
@@ -85,9 +85,11 @@ def subtractive_clustering(X, number_of_rules, radius=0.2):
     d = pdist(X, 'euclidean')
     d_squareform = squareform(d)
     # Calculate potential for each point
-    potential = np.sum(np.exp(-d_squareform**2 / radius**2), axis=1)
+    potential = np.sum(np.exp(-d_squareform**2 / (radius/2)**2), axis=1)
     # Sort by potential and select two highest points (for two rules)
     idx = np.argsort(potential)[::-1][:number_of_rules]
+    print(potential)
+    print(np.argsort(potential))
     return X[idx]
 
 
@@ -100,7 +102,7 @@ mfs = []  # Initialize the mf list
 for i in range(X_train_balanced.shape[1]):
     mf = []
     for j in range(number_of_rules):
-        mf.append(['gaussmf', {'mean': rule_centers[j][i], 'sigma': 1.0}])
+        mf.append(['gaussmf', {'mean': rule_centers[j][i], 'sigma': 100.0}])
     mfs.append(mf)
 
 # Updating the model with Membership Functions
@@ -109,7 +111,7 @@ mfc = membershipfunction.MemFuncs(mfs)
 anf = ANFIS(X_train_balanced,  y_train_balanced,  mfc)
 # Fitting the ANFIS Model
 print('Training model...')
-anf.trainHybridJangOffLine(epochs=5, tolerance=1e-8)
+anf.trainHybridJangOffLine(epochs=20, tolerance=1e-8)
 # Printing Output
 print(round(anf.consequents[-1][0], 6))
 print(round(anf.consequents[-2][0], 6))
