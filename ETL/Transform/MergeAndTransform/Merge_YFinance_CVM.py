@@ -4,7 +4,7 @@
 
 import pandas as pd
 
-####################################################################################################################
+########################################################################################################################
 # Technical Data
 # Retrieve technical data
 print('Processing Technical Data')
@@ -32,7 +32,47 @@ technicalData_yf_future = technicalData_yf_future.rename(
 
 technicalData_yf = technicalData_yf.merge(technicalData_yf_future, on=['TICKER', 'YEAR', 'MONTH'], how='left')
 
-####################################################################################################################
+########################################################################################################################
+# Get market aprreciation from BOVA11:
+
+technicalData_BOVA11_yf = pd.read_csv(f'../../Extract/YFinance/Extracted/technicalData_BOVA11_yf.csv', sep=';',
+                               encoding='ISO-8859-1')
+
+# Convert Date to pd.Datetime
+technicalData_BOVA11_yf['DATE'] = pd.to_datetime(technicalData_BOVA11_yf['DATE'])
+
+# Get year, month and year-1
+technicalData_BOVA11_yf['YEAR'] = technicalData_BOVA11_yf['DATE'].dt.year
+technicalData_BOVA11_yf['YEAR_MINUS_1'] = technicalData_BOVA11_yf['DATE'].dt.year - 1
+technicalData_BOVA11_yf['MONTH'] = technicalData_BOVA11_yf['DATE'].dt.month
+
+# Drill across operation
+technicalData_BOVA11_yf_future = technicalData_BOVA11_yf[['TICKER', 'CLOSE', 'YEAR_MINUS_1', 'MONTH']]
+technicalData_BOVA11_yf_future = technicalData_BOVA11_yf_future.rename(
+    columns={
+        'TICKER': 'TICKER',
+        'CLOSE': 'FUTURE_CLOSE',
+        'YEAR_MINUS_1': 'YEAR',
+        'MONTH': 'MONTH'
+    }
+)
+
+technicalData_BOVA11_yf = technicalData_BOVA11_yf.merge(technicalData_BOVA11_yf_future, on=['TICKER', 'YEAR', 'MONTH'],
+                                                        how='left')
+
+# Get 1 year appreciation
+technicalData_BOVA11_yf['APPRECIATION'] = \
+    technicalData_BOVA11_yf['FUTURE_CLOSE']/technicalData_BOVA11_yf['CLOSE'] - 1
+
+# Drop rows with NaN values in FUTURE_CLOSE_PRICE
+# (which are residues from the previous iterations)
+technicalData_BOVA11_yf.dropna(subset=['FUTURE_CLOSE'], how='any', inplace=True)
+
+# Save IBOVESPA data
+technicalData_BOVA11_yf[['TICKER', 'DATE', 'CLOSE', 'FUTURE_CLOSE', 'APPRECIATION']].\
+    to_csv("../../Load/marketData.csv", sep=';', decimal='.', encoding='ISO-8859-1', index=False)
+
+########################################################################################################################
 # Fundamental Data
 # Retrieve fundamental data
 print('Processing Fundamental Data')
@@ -125,6 +165,6 @@ mergedData.to_csv("mergedData.csv", sep=';', decimal='.', encoding='ISO-8859-1',
 # Clean unused columns for the final model input
 
 stockData = mergedData[['TICKER', 'DATE', 'PE', 'BVPS', 'ROE', 'DPR', 'DY', 'PBR', 'CA', 'GROSS_DEBT', 'ANS', 
-                        'CURRENT_RATIO', 'EPS', 'CLASS']]
+                        'CURRENT_RATIO', 'EPS', 'APPRECIATION', 'CLASS']]
 
 stockData.to_csv("../../Load/stockData.csv", sep=';', decimal='.', encoding='ISO-8859-1', index=False)
