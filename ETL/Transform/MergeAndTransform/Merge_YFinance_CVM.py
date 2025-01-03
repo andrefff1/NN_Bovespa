@@ -83,6 +83,8 @@ fundamentalData_CVM['DT_REFER'] = pd.to_datetime(fundamentalData_CVM['DT_REFER']
 
 # Get year and month
 fundamentalData_CVM['YEAR'] = fundamentalData_CVM['DT_REFER'].dt.year
+
+# as most dates are from the end of the month, add 1 to month.
 fundamentalData_CVM['MONTH'] = fundamentalData_CVM['DT_REFER'].dt.month + 1
 
 ####################################################################################################################
